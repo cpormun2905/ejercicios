@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="
+             http://maven.apache.org/POM/4.0.0
+             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Identificación del proyecto -->
+    <groupId>misEjercicios</groupId>
+    <artifactId>ejercicios</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <!-- La aplicación se empaqueta como WAR para Tomcat -->
+    <packaging>war</packaging>
+
+
+    <!-- Dependencias necesarias para compilar la aplicación -->
+    <dependencies>
+
+        <!--
+            API de Jakarta Servlet utilizada por Tomcat 11.
+
+            "provided" significa que necesitamos esta librería
+            para COMPILAR, pero no la incluimos en el WAR porque
+            Tomcat ya la proporciona durante la ejecución.
+        -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+
+    <build>
+
+        <plugins>
+
+            <!-- Compilador Java -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>21</release>
+                </configuration>
+            </plugin>
+
+            <!-- Generación del fichero WAR -->
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.2.3</version>
+            </plugin>
+
+        </plugins>
+
+    </build>
+
+</project>
