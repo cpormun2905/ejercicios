@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teclados</title>
+<style>
+	body { font-family: Arial, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+	table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+	th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+	th { background: #f0f0f0; }
+	button, a.boton { padding: 6px 12px; cursor: pointer; border: 1px solid #888; border-radius: 4px;
+		background: #fff; text-decoration: none; color: #000; font-size: 14px; }
+	button.borrar { border-color: #c0392b; color: #c0392b; }
+	#mensaje { margin-top: 1rem; min-height: 1.2rem; color: #c0392b; }
+</style>
+</head>
+<body>
+	<h1>Teclados</h1>
+	<a class="boton" href="index.html">Inicio</a>
+	<a class="boton" href="formulario_teclado.html">+ Nuevo teclado</a>
+
+	<table>
+		<thead>
+			<tr><th>ID</th><th>Color</th><th>Idioma</th><th>Categoría</th><th>Acciones</th></tr>
+		</thead>
+		<tbody id="tabla"></tbody>
+	</table>
+	<p id="mensaje"></p>
+
+	<script>
+		const URL_TECLADOS = "ej02_teclados";
+		const URL_CATEGORIAS = "ej02_categorias";
+		const URL_DELETE = "ej02_teclados/eliminar";
+		const tabla = document.getElementById("tabla");
+		const mensaje = document.getElementById("mensaje");
+
+		async function cargarTeclados() {
+			mensaje.textContent = "";
+			try {
+				// Pido teclados y categorías para mostrar la descripción de la categoría y no solo su id
+				const [respT, respC] = await Promise.all([fetch(URL_TECLADOS), fetch(URL_CATEGORIAS)]);
+				const teclados = await respT.json();
+				const categorias = await respC.json();
+				if (!respT.ok) throw new Error(teclados.mensaje || "Error al cargar teclados");
+				if (!respC.ok) throw new Error(categorias.mensaje || "Error al cargar categorías");
+
+				const descripciones = {};
+				categorias.forEach(c => descripciones[c.id] = c.descripcion);
+
+				tabla.innerHTML = "";
+				if (teclados.length === 0) {
+					const tr = tabla.insertRow();
+					const td = tr.insertCell();
+					td.colSpan = 5;
+					td.textContent = "No hay teclados";
+				}
+				teclados.forEach(t => tabla.appendChild(crearFila(t, descripciones)));
+			} catch (e) {
+				mensaje.textContent = e.message;
+			}
+		}
+
+		function crearFila(t, descripciones) {
+			const tr = document.createElement("tr");
+
+			const celdas = [
+				t.id,
+				t.color,
+				t.idioma,
+				descripciones[t.idCategoria] !== undefined
+					? descripciones[t.idCategoria]
+					: "(categoría " + t.idCategoria + ")"
+			];
+			celdas.forEach(valor => {
+				const td = document.createElement("td");
+				td.textContent = valor; // textContent evita inyectar HTML
+				tr.appendChild(td);
+			});
+
+			const tdAcc = document.createElement("td");
+			const editar = document.createElement("a");
+			editar.className = "boton";
+			editar.href = "formulario_teclado.html?id=" + t.id;
+			editar.textContent = "Editar";
+
+			const borrar = document.createElement("button");
+			borrar.className = "borrar";
+			borrar.textContent = "Borrar";
+			borrar.addEventListener("click", () => borrarTeclado(t));
+
+			tdAcc.append(editar, " ", borrar);
+			tr.appendChild(tdAcc);
+			return tr;
+		}
+
+		async function borrarTeclado(t) {
+			if (!confirm("¿Borrar el teclado " + t.id + "?")) return;
+			try {
+				const resp = await fetch(URL_DELETE + "?id=" + t.id, { method: "DELETE" });
+				const datos = await resp.json();
+				if (!resp.ok) throw new Error(datos.mensaje || "Error al borrar");
+				cargarTeclados();
+			} catch (e) {
+				mensaje.textContent = e.message;
+			}
+		}
+
+		cargarTeclados();
+	</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formulario de categoría</title>
+<style>
+	body { font-family: Arial, sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
+	label { display: block; margin-bottom: 4px; }
+	input[type=text] { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 1rem; }
+	button, a.boton { padding: 6px 12px; cursor: pointer; border: 1px solid #888; border-radius: 4px;
+		background: #fff; text-decoration: none; color: #000; font-size: 14px; }
+	#mensaje { margin-top: 1rem; min-height: 1.2rem; }
+	.error { color: #c0392b; }
+	.ok { color: #27ae60; }
+</style>
+</head>
+<body>
+	<h1 id="titulo">Nueva categoría</h1>
+
+	<form id="formulario">
+		<label for="descripcion">Descripción</label>
+		<input type="text" id="descripcion" required>
+		<button type="submit">Guardar</button>
+		<a class="boton" href="categorias.html">Volver al listado</a>
+	</form>
+	<p id="mensaje"></p>
+
+	<script>
+		const URL_GET = "ej02_categorias";
+		const URL_POST = "ej02_categorias/crear";
+		const URL_PUT = "ej02_categorias/modificar";
+		const params = new URLSearchParams(window.location.search);
+		const id = params.get("id"); // si existe, estamos editando
+
+		const inputDescripcion = document.getElementById("descripcion");
+		const mensaje = document.getElementById("mensaje");
+
+		function mostrar(texto, esError) {
+			mensaje.textContent = texto;
+			mensaje.className = esError ? "error" : "ok";
+		}
+
+		// Modo edición: cargar la categoría actual
+		async function cargarCategoria() {
+			document.getElementById("titulo").textContent = "Editar categoría " + id;
+			try {
+				const resp = await fetch(URL_GET + "?id=" + encodeURIComponent(id));
+				const c = await resp.json();
+				if (!resp.ok) throw new Error(c.mensaje || "Error al cargar");
+				inputDescripcion.value = c.descripcion;
+			} catch (e) {
+				mostrar(e.message, true);
+			}
+		}
+
+		document.getElementById("formulario").addEventListener("submit", async (ev) => {
+			ev.preventDefault();
+
+			const editando = id !== null;
+			const cuerpo = { descripcion: inputDescripcion.value };
+			if (editando) cuerpo.id = parseInt(id, 10);
+
+			try {
+				const resp = await fetch(editando ? URL_PUT : URL_POST, {
+					method: editando ? "PUT" : "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(cuerpo)
+				});
+				const datos = await resp.json();
+				if (!resp.ok) throw new Error(datos.mensaje || "Error al guardar");
+
+				mostrar(editando ? "Categoría modificada" : "Categoría creada con id " + datos.id, false);
+				if (!editando) inputDescripcion.value = "";
+			} catch (e) {
+				mostrar(e.message, true);
+			}
+		});
+
+		if (id !== null) cargarCategoria();
+	</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Categorías</title>
+<style>
+	body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+	table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+	th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+	th { background: #f0f0f0; }
+	button, a.boton { padding: 6px 12px; cursor: pointer; border: 1px solid #888; border-radius: 4px;
+		background: #fff; text-decoration: none; color: #000; font-size: 14px; }
+	button.borrar { border-color: #c0392b; color: #c0392b; }
+	#mensaje { margin-top: 1rem; min-height: 1.2rem; color: #c0392b; }
+</style>
+</head>
+<body>
+	<h1>Categorías</h1>
+	<a class="boton" href="formulario_categoria.html">+ Nueva categoría</a>
+
+	<table>
+		<thead>
+			<tr><th>ID</th><th>Descripción</th><th>Acciones</th></tr>
+		</thead>
+		<tbody id="tabla"></tbody>
+	</table>
+	<p id="mensaje"></p>
+
+	<script>
+		const URL_GET = "ej02_categorias";
+		const URL_DELETE = "ej02_categorias/eliminar";
+		const tabla = document.getElementById("tabla");
+		const mensaje = document.getElementById("mensaje");
+
+		async function cargarCategorias() {
+			mensaje.textContent = "";
+			try {
+				const resp = await fetch(URL_GET);
+				const categorias = await resp.json();
+				if (!resp.ok) throw new Error(categorias.mensaje || "Error al cargar");
+
+				tabla.innerHTML = "";
+				if (categorias.length === 0) {
+					const tr = tabla.insertRow();
+					const td = tr.insertCell();
+					td.colSpan = 3;
+					td.textContent = "No hay categorías";
+				}
+				categorias.forEach(c => tabla.appendChild(crearFila(c)));
+			} catch (e) {
+				mensaje.textContent = e.message;
+			}
+		}
+
+		function crearFila(c) {
+			const tr = document.createElement("tr");
+
+			const tdId = document.createElement("td");
+			tdId.textContent = c.id;
+			const tdDesc = document.createElement("td");
+			tdDesc.textContent = c.descripcion; // textContent evita inyectar HTML
+
+			const tdAcc = document.createElement("td");
+			const editar = document.createElement("a");
+			editar.className = "boton";
+			editar.href = "formulario_categoria.html?id=" + c.id;
+			editar.textContent = "Editar";
+
+			const borrar = document.createElement("button");
+			borrar.className = "borrar";
+			borrar.textContent = "Borrar";
+			borrar.addEventListener("click", () => borrarCategoria(c));
+
+			tdAcc.append(editar, " ", borrar);
+			tr.append(tdId, tdDesc, tdAcc);
+			return tr;
+		}
+
+		async function borrarCategoria(c) {
+			if (!confirm("¿Borrar la categoría \"" + c.descripcion + "\"?")) return;
+			try {
+				const resp = await fetch(URL_DELETE + "?id=" + c.id, { method: "DELETE" });
+				const datos = await resp.json();
+				if (!resp.ok) throw new Error(datos.mensaje || "Error al borrar");
+				cargarCategorias();
+			} catch (e) {
+				mensaje.textContent = e.message;
+			}
+		}
+
+		cargarCategorias();
+	</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formulario de teclado</title>
+<style>
+	body { font-family: Arial, sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
+	label { display: block; margin-bottom: 4px; }
+	input[type=text], select { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 1rem; }
+	button, a.boton { padding: 6px 12px; cursor: pointer; border: 1px solid #888; border-radius: 4px;
+		background: #fff; text-decoration: none; color: #000; font-size: 14px; }
+	#mensaje { margin-top: 1rem; min-height: 1.2rem; }
+	.error { color: #c0392b; }
+	.ok { color: #27ae60; }
+</style>
+</head>
+<body>
+	<h1 id="titulo">Nuevo teclado</h1>
+
+	<form id="formulario">
+		<label for="color">Color</label>
+		<input type="text" id="color" required>
+
+		<label for="idioma">Idioma</label>
+		<input type="text" id="idioma" required>
+
+		<label for="categoria">Categoría</label>
+		<select id="categoria" required>
+			<option value="">-- Selecciona una categoría --</option>
+		</select>
+
+		<button type="submit">Guardar</button>
+		<a class="boton" href="teclados.html">Volver al listado</a>
+	</form>
+	<p id="mensaje"></p>
+
+	<script>
+		const URL_TECLADOS = "ej02_teclados";
+		const URL_CATEGORIAS = "ej02_categorias";
+		const URL_POST = "ej02_teclados/crear";
+		const URL_PUT = "ej02_teclados/modificar";
+
+		const params = new URLSearchParams(window.location.search);
+		const id = params.get("id"); // si existe, estamos editando
+
+		const inputColor = document.getElementById("color");
+		const inputIdioma = document.getElementById("idioma");
+		const selectCategoria = document.getElementById("categoria");
+		const mensaje = document.getElementById("mensaje");
+
+		function mostrar(texto, esError) {
+			mensaje.textContent = texto;
+			mensaje.className = esError ? "error" : "ok";
+		}
+
+		// Rellena el desplegable con las categorías; el value de cada option es el id de la categoría
+		async function cargarCategorias() {
+			const resp = await fetch(URL_CATEGORIAS);
+			const categorias = await resp.json();
+			if (!resp.ok) throw new Error(categorias.mensaje || "Error al cargar categorías");
+
+			categorias.forEach(c => {
+				const option = document.createElement("option");
+				option.value = c.id;
+				option.textContent = c.descripcion;
+				selectCategoria.appendChild(option);
+			});
+		}
+
+		// Modo edición: cargar el teclado actual y seleccionar su categoría
+		async function cargarTeclado() {
+			document.getElementById("titulo").textContent = "Editar teclado " + id;
+			const resp = await fetch(URL_TECLADOS + "?id=" + encodeURIComponent(id));
+			const t = await resp.json();
+			if (!resp.ok) throw new Error(t.mensaje || "Error al cargar el teclado");
+
+			inputColor.value = t.color;
+			inputIdioma.value = t.idioma;
+			selectCategoria.value = t.idCategoria;
+		}
+
+		async function iniciar() {
+			try {
+				// Primero las categorías, para poder seleccionar después la del teclado
+				await cargarCategorias();
+				if (id !== null) await cargarTeclado();
+			} catch (e) {
+				mostrar(e.message, true);
+			}
+		}
+
+		document.getElementById("formulario").addEventListener("submit", async (ev) => {
+			ev.preventDefault();
+
+			const editando = id !== null;
+			const cuerpo = {
+				color: inputColor.value,
+				idioma: inputIdioma.value,
+				idCategoria: parseInt(selectCategoria.value, 10)
+			};
+			if (editando) cuerpo.id = parseInt(id, 10);
+
+			try {
+				const resp = await fetch(editando ? URL_PUT : URL_POST, {
+					method: editando ? "PUT" : "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(cuerpo)
+				});
+				const datos = await resp.json();
+				if (!resp.ok) throw new Error(datos.mensaje || "Error al guardar");
+
+				mostrar(editando ? "Teclado modificado" : "Teclado creado con id " + datos.id, false);
+				if (!editando) {
+					inputColor.value = "";
+					inputIdioma.value = "";
+					selectCategoria.value = "";
+				}
+			} catch (e) {
+				mostrar(e.message, true);
+			}
+		});
+
+		iniciar();
+	</script>
+</body>
+</html>
