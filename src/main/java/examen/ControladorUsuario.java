@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.rmrsoft.tutorialJ2eeSpringBoot.examen20261110.Usuario;
 
 public class ControladorUsuario {
 
